@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - include:
+      file: changes/001-create-customers.yaml
+      relativeToChangelogFile: true
+
+  - include:
+      file: changes/002-add-customer-email.yaml
+      relativeToChangelogFile: true
