@@ -1,1 +1,1 @@
-CREATE DATABASE mydatabase_test;
+CREATE DATABASE local_db_migration;
