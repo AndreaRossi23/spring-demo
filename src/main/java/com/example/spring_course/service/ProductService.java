@@ -5,6 +5,9 @@ import com.example.spring_course.controller.model.ProductResponse;
 import com.example.spring_course.repository.ProductRepository;
 import com.example.spring_course.repository.mapper.ProductMapper;
 import com.example.spring_course.repository.model.Product;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,7 @@ public class ProductService {
                 .toList();
     }
 
+    @Cacheable(value = "products", key = "#id")
     @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
         Product product = productRepository.findById(id)
@@ -47,6 +51,24 @@ public class ProductService {
         return productMapper.toResponse(product);
     }
 
+    @CachePut(value = "products", key = "#id")
+    @Transactional
+    public ProductResponse update(Long id, ProductRequest request) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        product.setName(request.name());
+        product.setDescription(request.description());
+        product.setPrice(request.price());
+        product.setCategory(request.category());
+        product.setBrand(request.brand());
+
+        Product updatedProduct = productRepository.save(product);
+
+        return productMapper.toResponse(updatedProduct);
+    }
+
+    @CacheEvict(value = "products", key = "#id")
     @Transactional
     public void delete(Long id) {
         productRepository.deleteById(id);

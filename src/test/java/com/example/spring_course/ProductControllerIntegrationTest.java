@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +26,13 @@ class ProductControllerIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     @BeforeEach
     void setUp() {
         productRepository.deleteAll();
+        cacheManager.getCache("products").clear();
     }
 
     @Test
@@ -123,6 +128,46 @@ class ProductControllerIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(response.getBody());
         assertEquals(product.getId(), response.getBody().id());
         assertEquals("MacBook Pro", response.getBody().name());
+
+        assertNotNull(cacheManager.getCache("products"));
+        assertNotNull(cacheManager.getCache("products").get(product.getId()));
+    }
+
+    @Test
+    void shouldUpdateProductAndRefreshCache() {
+
+        Product product = productRepository.save(new Product(
+                "MacBook Pro",
+                "Notebook Apple",
+                new BigDecimal("2499.99"),
+                "NOTEBOOK",
+                "Apple"
+        ));
+
+        restTemplate.getForEntity(
+                "/api/products/" + product.getId(),
+                ProductResponse.class
+        );
+
+        ProductRequest request = new ProductRequest(
+                "MacBook Air",
+                "Notebook Apple aggiornato",
+                new BigDecimal("1999.99"),
+                "NOTEBOOK",
+                "Apple"
+        );
+
+        ResponseEntity<ProductResponse> response = restTemplate.exchange(
+                "/api/products/" + product.getId(),
+                org.springframework.http.HttpMethod.PUT,
+                new org.springframework.http.HttpEntity<>(request),
+                ProductResponse.class
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("MacBook Air", response.getBody().name());
+        assertEquals("MacBook Air", cacheManager.getCache("products")
+                .get(product.getId(), ProductResponse.class).name());
     }
 
     @Test
@@ -149,6 +194,33 @@ class ProductControllerIntegrationTest extends AbstractIntegrationTest {
         // Assert
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         assertFalse(productRepository.existsById(product.getId()));
+        assertNull(cacheManager.getCache("products").get(product.getId()));
+    }
+
+    @Test
+    void shouldRetrieveProductAsynchronously() {
+
+        Product product = productRepository.save(new Product(
+                "MacBook Pro",
+                "Notebook Apple",
+                new BigDecimal("2499.99"),
+                "NOTEBOOK",
+                "Apple"
+        ));
+
+        long start = System.currentTimeMillis();
+
+        ResponseEntity<ProductResponse> response = restTemplate.getForEntity(
+                "/api/products/" + product.getId() + "/async",
+                ProductResponse.class
+        );
+
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(product.getId(), response.getBody().id());
+        assertTrue(elapsed >= 2900);
     }
 
     @Test
