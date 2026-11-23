@@ -1,0 +1,22 @@
+info:
+  name: REGISTER
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:8080/api/auth/register
+  body:
+    type: json
+    data: |-
+      {
+        "username": "andrea",
+        "password": "password123"
+      }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+  forwardAuthorizationHeader: false
