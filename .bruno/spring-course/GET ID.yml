@@ -5,7 +5,7 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/catalog/products/user/6af6bfc9a676af1e01f2b878
+  url: "{{base_url}}/api/catalog/products/user/6af6bfc9a676af1e01f2b878"
   auth:
     type: basic
     username: admin

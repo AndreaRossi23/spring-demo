@@ -57,6 +57,12 @@
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
+		<!-- Spring Batch (metadati persistiti su PostgreSQL) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-batch-jdbc</artifactId>
+		</dependency>
+
 		<!-- Caching -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
